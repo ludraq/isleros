@@ -1,0 +1,52 @@
+<html><head><base href="." /><title>Sistema de Control de Gasolina</title>
+    <link rel="stylesheet" href="styles.css">
+    </head>
+    <body>
+        <div class="container">
+            <h2>Control de Ventas de Combustible</h2>
+            <div class="form-group">
+                <label>Galonaje Inicial:</label>
+                <input type="number" id="galonaje_inicial" onchange="calcularVenta()" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Galonaje Final:</label>
+                <input type="number" id="galonaje_final" onchange="calcularVenta()" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Galonaje Vendido:</label>
+                <input type="number" id="galonaje_vendido" readonly>
+                <div class="display-value" id="galonaje_vendido_display"></div>
+            </div>
+            <div class="form-group">
+                <label>Precio por Galón (COP):</label>
+                <input type="number" id="precio_galon" onchange="calcularVenta()">
+            </div>
+            <div class="form-group">
+                <label>Total Planilla:</label>
+                <input type="number" id="total_planilla" readonly>
+                <div class="display-value" id="total_planilla_display"></div>
+            </div>
+    
+            <button onclick="toggleDenominaciones()">Mostrar/Ocultar Denominaciones</button>
+    
+            <div id="denominaciones" class="denominaciones">
+                <h3>Control de Denominaciones</h3>
+                <div id="denominaciones_container"></div>
+                
+                <div class="form-group">
+                    <label>Total Denominaciones:</label>
+                    <input type="number" id="total_denominaciones" readonly>
+                    <div class="display-value" id="total_denominaciones_display"></div>
+                </div>
+                <div class="form-group">
+                    <label>Diferencia:</label>
+                    <input type="number" id="diferencia" readonly>
+                    <div class="display-value" id="diferencia_display"></div>
+                </div>
+            </div>
+        </div>
+    
+        <script src="scripts.js">
+            
+        </script>
+    </body></html>
