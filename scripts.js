@@ -26,7 +26,7 @@ const denominaciones = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200,
                 const galonaje_final = parseFloat(document.getElementById('galonaje_final').value) || 0;
                 const precio_galon = parseFloat(document.getElementById('precio_galon').value) || 0;
     
-                const galonaje_vendido = galonaje_inicial - galonaje_final;
+                const galonaje_vendido = galonaje_final - galonaje_inicial;
                 const total_planilla = galonaje_vendido * precio_galon;
     
                 document.getElementById('galonaje_vendido').value = galonaje_vendido.toFixed(2);
