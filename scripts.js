@@ -76,7 +76,7 @@ function calcularVentaManguera(surtidor, manguera) {
   const galonaje_inicial = parseFloat(document.getElementById(`galonaje_inicial_${surtidor}_${manguera}`).value) || 0;
   const galonaje_final = parseFloat(document.getElementById(`galonaje_final_${surtidor}_${manguera}`).value) || 0;
   const precio_galon = parseFloat(document.getElementById(`precio_galon_${surtidor}_${manguera}`).value) || 0;
-  const galonaje_vendido = galonaje_final - galonaje_inicial;
+  const galonaje_vendido = galonaje_inicial - galonaje_final;
   const total_planilla = galonaje_vendido * precio_galon;
   document.getElementById(`galonaje_vendido_${surtidor}_${manguera}`).value = galonaje_vendido.toFixed(2);
   document.getElementById(`galonaje_vendido_display_${surtidor}_${manguera}`).textContent = galonaje_vendido.toFixed(2);
@@ -108,7 +108,6 @@ function calcularTotales() {
     subtotalDisplay.textContent = formatCOP(Math.floor(subtotal));
     totalEfectivo += subtotal;
   });
-
   const totalBaucher = parseFloat(document.getElementById('total_baucher').dataset.value) || 0;
   const totalTransferencias = parseFloat(document.getElementById('total_transferencias').dataset.value) || 0;
   const totalBonos = parseFloat(document.getElementById('total_bonos').dataset.value) || 0;
@@ -117,23 +116,20 @@ function calcularTotales() {
   document.getElementById('total_transferencias_display').textContent = formatCOP(Math.floor(totalTransferencias));
   document.getElementById('total_bonos_display').textContent = formatCOP(Math.floor(totalBonos));
   document.getElementById('total_creditos_display').textContent = formatCOP(Math.floor(totalCreditos));
-
   const total = totalEfectivo + totalBaucher + totalTransferencias + totalBonos + totalCreditos;
   document.getElementById('total_denominaciones').value = total.toFixed(2);
   document.getElementById('total_denominaciones_display').textContent = formatCOP(Math.floor(total));
-
   const total_general = parseFloat(document.getElementById('total_general').value) || 0;
   const diferencia = total - total_general;
   document.getElementById('diferencia').value = diferencia.toFixed(2);
   document.getElementById('diferencia_display').textContent = formatCOP(Math.floor(diferencia));
-
-  // Verificar si el precio del combustible está ingresado
-  const precioCombustibleInput = document.getElementById('precio_combustible'); // Asegúrate de que este ID sea el correcto
-  const precioCombustible = parseFloat(precioCombustibleInput.value) || 0;
-
-  // Solo mostrar alerta si la diferencia es 0 y el precio de combustible es mayor que 0
-  if (diferencia === 0 && precioCombustible > 0) {
-    alert('¡La planilla quedó cuadrada!');
+  const hasPriceEntered = Array.from(document.querySelectorAll('[id^="precio_galon_"]')).some(el => el.value);
+  if (hasPriceEntered) {
+    if (diferencia === 0) {
+      showModal('La planilla está cuadrada');
+    } else if (total > total_general) {
+      showModal('¡Ojo! Estás metiendo también tus ganancias');
+    }
   }
 }
 function toggleDenominaciones() {
@@ -157,5 +153,14 @@ function procesarPagoInput(input) {
   input.dataset.value = numericValue;
   input.value = formatCOP(numericValue);
   calcularTotales();
+}
+function showModal(message) {
+  document.getElementById('modalMessage').textContent = message;
+  document.getElementById('messageModal').style.display = 'block';
+  document.getElementById('modalBackdrop').style.display = 'block';
+}
+function closeModal() {
+  document.getElementById('messageModal').style.display = 'none';
+  document.getElementById('modalBackdrop').style.display = 'none';
 }
 agregarSurtidor();
