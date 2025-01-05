@@ -123,7 +123,7 @@ function calcularTotales() {
   const diferencia = total - total_general;
   document.getElementById('diferencia').value = diferencia.toFixed(2);
   document.getElementById('diferencia_display').textContent = formatCOP(Math.floor(diferencia));
-  if (diferencia === 0) {
+  if (diferencia === 0 && precioCombustible > 0) {
     alert('¡La planilla quedó cuadrada!');
   }
 }
