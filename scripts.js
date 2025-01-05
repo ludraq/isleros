@@ -108,6 +108,7 @@ function calcularTotales() {
     subtotalDisplay.textContent = formatCOP(Math.floor(subtotal));
     totalEfectivo += subtotal;
   });
+
   const totalBaucher = parseFloat(document.getElementById('total_baucher').dataset.value) || 0;
   const totalTransferencias = parseFloat(document.getElementById('total_transferencias').dataset.value) || 0;
   const totalBonos = parseFloat(document.getElementById('total_bonos').dataset.value) || 0;
@@ -116,16 +117,21 @@ function calcularTotales() {
   document.getElementById('total_transferencias_display').textContent = formatCOP(Math.floor(totalTransferencias));
   document.getElementById('total_bonos_display').textContent = formatCOP(Math.floor(totalBonos));
   document.getElementById('total_creditos_display').textContent = formatCOP(Math.floor(totalCreditos));
+
   const total = totalEfectivo + totalBaucher + totalTransferencias + totalBonos + totalCreditos;
   document.getElementById('total_denominaciones').value = total.toFixed(2);
   document.getElementById('total_denominaciones_display').textContent = formatCOP(Math.floor(total));
+
   const total_general = parseFloat(document.getElementById('total_general').value) || 0;
   const diferencia = total - total_general;
   document.getElementById('diferencia').value = diferencia.toFixed(2);
   document.getElementById('diferencia_display').textContent = formatCOP(Math.floor(diferencia));
 
+  // Verificar si el precio del combustible está ingresado
   const precioCombustibleInput = document.getElementById('precio_combustible'); // Asegúrate de que este ID sea el correcto
   const precioCombustible = parseFloat(precioCombustibleInput.value) || 0;
+
+  // Solo mostrar alerta si la diferencia es 0 y el precio de combustible es mayor que 0
   if (diferencia === 0 && precioCombustible > 0) {
     alert('¡La planilla quedó cuadrada!');
   }
