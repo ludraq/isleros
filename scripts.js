@@ -15,9 +15,6 @@ function createMangueraButton(surtidorId, mangueraNum) {
                 <div class="input-group">
                     <label>Galonaje Inicial:</label>
                     <input type="text" 
-                           pattern="\\d{10}"
-                           maxlength="10"
-                           minlength="10"
                            id="inicial-${surtidorId}-${mangueraNum}"
                            onchange="calcularGalonaje(${surtidorId}, ${mangueraNum})"
                            required>
@@ -25,9 +22,6 @@ function createMangueraButton(surtidorId, mangueraNum) {
                 <div class="input-group">
                     <label>Galonaje Final:</label>
                     <input type="text" 
-                           pattern="\\d{10}"
-                           maxlength="10"
-                           minlength="10"
                            id="final-${surtidorId}-${mangueraNum}"
                            onchange="calcularGalonaje(${surtidorId}, ${mangueraNum})"
                            required>
@@ -36,6 +30,19 @@ function createMangueraButton(surtidorId, mangueraNum) {
                     <label>Galonaje Vendido:</label>
                     <input type="number" 
                            id="vendido-${surtidorId}-${mangueraNum}"
+                           disabled>
+                </div>
+                <div class="input-group">
+                    <label>Galonaje en Créditos:</label>
+                    <input type="number" 
+                           id="creditos-${surtidorId}-${mangueraNum}"
+                           onchange="calcularTotal(${surtidorId}, ${mangueraNum})"
+                           value="0">
+                </div>
+                <div class="input-group">
+                    <label>Galonaje Neto:</label>
+                    <input type="number" 
+                           id="neto-${surtidorId}-${mangueraNum}"
                            disabled>
                 </div>
                 <div class="input-group">
@@ -97,7 +104,7 @@ function handleManguera(surtidorId, mangueraNum) {
 function calcularGalonaje(surtidorId, mangueraNum) {
   const inicial = document.getElementById(`inicial-${surtidorId}-${mangueraNum}`).value;
   const final = document.getElementById(`final-${surtidorId}-${mangueraNum}`).value;
-  if (inicial.length === 10 && final.length === 10) {
+  if (inicial && final) {
     const vendido = parseFloat(final) - parseFloat(inicial);
     document.getElementById(`vendido-${surtidorId}-${mangueraNum}`).value = vendido;
     calcularTotal(surtidorId, mangueraNum);
@@ -113,9 +120,12 @@ function formatearPrecio(surtidorId, mangueraNum) {
 }
 function calcularTotal(surtidorId, mangueraNum) {
   const vendido = parseFloat(document.getElementById(`vendido-${surtidorId}-${mangueraNum}`).value) || 0;
+  const creditos = parseFloat(document.getElementById(`creditos-${surtidorId}-${mangueraNum}`).value) || 0;
+  const neto = vendido - creditos;
+  document.getElementById(`neto-${surtidorId}-${mangueraNum}`).value = neto;
   const precioStr = document.getElementById(`precio-${surtidorId}-${mangueraNum}`).value;
   const precio = unformatNumber(precioStr);
-  const total = vendido * precio;
+  const total = neto * precio;
   document.getElementById(`total-${surtidorId}-${mangueraNum}`).value = formatNumber(total);
   calcularTotalPlanilla();
 }
@@ -123,7 +133,7 @@ const denominaciones = {
   billetes: [100000, 50000, 20000, 10000, 5000, 2000],
   monedas: [1000, 500, 200, 100, 50]
 };
-const otrosMedios = ['Contratos', 'Créditos', 'Váuchers', 'Transferencias', 'Bonos'];
+const otrosMedios = ['Contratos', 'Váuchers', 'Transferencias', 'Bonos'];
 function inicializarCuentas() {
   const efectivoContent = document.getElementById('efectivo-content');
   const otrosMediosContent = document.getElementById('otros-medios-content');
@@ -239,8 +249,6 @@ function actualizarDiferencia() {
   const totalPlanilla = unformatNumber(document.getElementById('total-planilla').value);
   const diferencia = dineroTotal - totalPlanilla;
   document.getElementById('diferencia-total').value = formatNumber(diferencia);
-  
-  // Check conditions for popups
   if (diferencia === 0) {
     let hasPrice = false;
     for (let s = 1; s <= surtidorCount; s++) {
@@ -278,7 +286,6 @@ function closePopup(popupId) {
   popup.style.display = 'none';
   overlay.style.display = 'none';
 }
-// Update event listener to handle both popups
 document.getElementById('popup-overlay').addEventListener('click', () => {
   closePopup('popup');
   closePopup('warning-popup');
