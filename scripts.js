@@ -1,166 +1,287 @@
-const denominaciones = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50];
-let contadorSurtidores = 0;
-function formatCOP(number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'decimal',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(number);
+let surtidorCount = 0;
+function formatNumber(number) {
+  return new Intl.NumberFormat('es-CO').format(number);
 }
-const container = document.getElementById('denominaciones_container');
-denominaciones.forEach(den => {
-  const div = document.createElement('div');
-  div.className = 'form-group';
-  div.innerHTML = `
-                <label>Billetes de ${den.toLocaleString()}:</label>
-                <input type="number" class="cantidad" data-denominacion="${den}" onchange="calcularTotales()">
-                <input type="number" class="subtotal" readonly>
-                <div class="display-value subtotal-display"></div>
-            `;
-  container.appendChild(div);
-});
-function agregarSurtidor() {
-  contadorSurtidores++;
-  const surtidorDiv = document.createElement('div');
-  surtidorDiv.className = 'surtidor';
-  surtidorDiv.id = `surtidor_${contadorSurtidores}`;
-  surtidorDiv.innerHTML = `
-        <div class="surtidor-header">
-            <h2>Surtidor ${contadorSurtidores}</h2>
-            <button class="remove-surtidor-btn" onclick="quitarSurtidor(${contadorSurtidores})">
-                Quitar Surtidor
+function unformatNumber(formattedNumber) {
+  return parseFloat(formattedNumber.replace(/\./g, '')) || 0;
+}
+function createMangueraButton(surtidorId, mangueraNum) {
+  return `
+        <div>
+            <button class="manguera-btn" onclick="handleManguera(${surtidorId}, ${mangueraNum})">
+                Manguera ${mangueraNum}
             </button>
-        </div>
-        <div class="mangueras-grid">
-            ${[1, 2, 3, 4].map(n => `
-                <button class="manguera-btn" onclick="toggleManguera('surtidor${contadorSurtidores}_manguera${n}')">
-                    Manguera ${n}
-                </button>
-                <div id="surtidor${contadorSurtidores}_manguera${n}" class="manguera-container container">
-                    <div class="form-group">
-                        <label>Galonaje Inicial:</label>
-                        <input type="number" id="galonaje_inicial_${contadorSurtidores}_${n}" 
-                            onchange="calcularVentaManguera(${contadorSurtidores}, ${n})" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label>Galonaje Final:</label>
-                        <input type="number" id="galonaje_final_${contadorSurtidores}_${n}" 
-                            onchange="calcularVentaManguera(${contadorSurtidores}, ${n})" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label>Galonaje Vendido:</label>
-                        <input type="number" id="galonaje_vendido_${contadorSurtidores}_${n}" readonly>
-                        <div class="display-value" id="galonaje_vendido_display_${contadorSurtidores}_${n}"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>Precio por Galón (COP):</label>
-                        <input type="number" id="precio_galon_${contadorSurtidores}_${n}" 
-                            onchange="calcularVentaManguera(${contadorSurtidores}, ${n})">
-                    </div>
-                    <div class="form-group">
-                        <label>Total Planilla:</label>
-                        <input type="number" id="total_planilla_${contadorSurtidores}_${n}" readonly>
-                        <div class="display-value" id="total_planilla_display_${contadorSurtidores}_${n}"></div>
-                    </div>
+            <div id="manguera-${surtidorId}-${mangueraNum}-details" class="manguera-details">
+                <div class="input-group">
+                    <label>Galonaje Inicial:</label>
+                    <input type="text" 
+                           pattern="\\d{10}"
+                           maxlength="10"
+                           minlength="10"
+                           id="inicial-${surtidorId}-${mangueraNum}"
+                           onchange="calcularGalonaje(${surtidorId}, ${mangueraNum})"
+                           required>
                 </div>
-            `).join('')}
+                <div class="input-group">
+                    <label>Galonaje Final:</label>
+                    <input type="text" 
+                           pattern="\\d{10}"
+                           maxlength="10"
+                           minlength="10"
+                           id="final-${surtidorId}-${mangueraNum}"
+                           onchange="calcularGalonaje(${surtidorId}, ${mangueraNum})"
+                           required>
+                </div>
+                <div class="input-group">
+                    <label>Galonaje Vendido:</label>
+                    <input type="number" 
+                           id="vendido-${surtidorId}-${mangueraNum}"
+                           disabled>
+                </div>
+                <div class="input-group">
+                    <label>Precio Combustible:</label>
+                    <input type="text" 
+                           id="precio-${surtidorId}-${mangueraNum}"
+                           onchange="formatearPrecio(${surtidorId}, ${mangueraNum})">
+                </div>
+                <div class="input-group">
+                    <label>Total Manguera:</label>
+                    <input type="text" 
+                           id="total-${surtidorId}-${mangueraNum}"
+                           disabled>
+                </div>
+            </div>
         </div>
     `;
-  document.getElementById('surtidores').appendChild(surtidorDiv);
 }
-function toggleManguera(id) {
-  const div = document.getElementById(id);
-  div.style.display = div.style.display === 'none' ? 'block' : 'none';
+function createSurtidor(id) {
+  const surtidorHtml = `
+        <div class="surtidor" id="surtidor-${id}">
+            <div class="surtidor-header">
+                <h2 class="surtidor-title">Surtidor ${id}</h2>
+                <button class="delete-surtidor" onclick="deleteSurtidor(${id})">Eliminar</button>
+            </div>
+            <div class="mangueras-container">
+                ${createMangueraButton(id, 1)}
+                ${createMangueraButton(id, 2)}
+                ${createMangueraButton(id, 3)}
+                ${createMangueraButton(id, 4)}
+            </div>
+        </div>
+    `;
+  return surtidorHtml;
 }
-function calcularVentaManguera(surtidor, manguera) {
-  const galonaje_inicial = parseFloat(document.getElementById(`galonaje_inicial_${surtidor}_${manguera}`).value) || 0;
-  const galonaje_final = parseFloat(document.getElementById(`galonaje_final_${surtidor}_${manguera}`).value) || 0;
-  const precio_galon = parseFloat(document.getElementById(`precio_galon_${surtidor}_${manguera}`).value) || 0;
-  const galonaje_vendido = galonaje_inicial - galonaje_final;
-  const total_planilla = galonaje_vendido * precio_galon;
-  document.getElementById(`galonaje_vendido_${surtidor}_${manguera}`).value = galonaje_vendido.toFixed(2);
-  document.getElementById(`galonaje_vendido_display_${surtidor}_${manguera}`).textContent = galonaje_vendido.toFixed(2);
-  document.getElementById(`total_planilla_${surtidor}_${manguera}`).value = total_planilla.toFixed(2);
-  document.getElementById(`total_planilla_display_${surtidor}_${manguera}`).textContent = formatCOP(Math.floor(total_planilla));
-  calcularTotalGeneral();
+function addSurtidor() {
+  surtidorCount++;
+  const mainContainer = document.getElementById('main-container');
+  mainContainer.insertAdjacentHTML('beforeend', createSurtidor(surtidorCount));
 }
-function calcularTotalGeneral() {
-  let total = 0;
-  for (let s = 1; s <= contadorSurtidores; s++) {
-    for (let m = 1; m <= 4; m++) {
-      const totalPlanilla = parseFloat(document.getElementById(`total_planilla_${s}_${m}`)?.value || 0);
-      total += totalPlanilla;
-    }
-  }
-  document.getElementById('total_general').value = total.toFixed(2);
-  document.getElementById('total_general_display').textContent = formatCOP(Math.floor(total));
-  calcularTotales();
-}
-function calcularTotales() {
-  let totalEfectivo = 0;
-  document.querySelectorAll('.cantidad').forEach(input => {
-    const cantidad = parseFloat(input.value) || 0;
-    const denominacion = parseFloat(input.dataset.denominacion);
-    const subtotal = cantidad * denominacion;
-    const subtotalInput = input.parentElement.querySelector('.subtotal');
-    const subtotalDisplay = input.parentElement.querySelector('.subtotal-display');
-    subtotalInput.value = subtotal.toFixed(2);
-    subtotalDisplay.textContent = formatCOP(Math.floor(subtotal));
-    totalEfectivo += subtotal;
-  });
-  const totalBaucher = parseFloat(document.getElementById('total_baucher').dataset.value) || 0;
-  const totalTransferencias = parseFloat(document.getElementById('total_transferencias').dataset.value) || 0;
-  const totalBonos = parseFloat(document.getElementById('total_bonos').dataset.value) || 0;
-  const totalCreditos = parseFloat(document.getElementById('total_creditos').dataset.value) || 0;
-  document.getElementById('total_baucher_display').textContent = formatCOP(Math.floor(totalBaucher));
-  document.getElementById('total_transferencias_display').textContent = formatCOP(Math.floor(totalTransferencias));
-  document.getElementById('total_bonos_display').textContent = formatCOP(Math.floor(totalBonos));
-  document.getElementById('total_creditos_display').textContent = formatCOP(Math.floor(totalCreditos));
-  const total = totalEfectivo + totalBaucher + totalTransferencias + totalBonos + totalCreditos;
-  document.getElementById('total_denominaciones').value = total.toFixed(2);
-  document.getElementById('total_denominaciones_display').textContent = formatCOP(Math.floor(total));
-  const total_general = parseFloat(document.getElementById('total_general').value) || 0;
-  const diferencia = total - total_general;
-  document.getElementById('diferencia').value = diferencia.toFixed(2);
-  document.getElementById('diferencia_display').textContent = formatCOP(Math.floor(diferencia));
-  const hasPriceEntered = Array.from(document.querySelectorAll('[id^="precio_galon_"]')).some(el => el.value);
-  if (hasPriceEntered) {
-    if (diferencia === 0) {
-      showModal('La planilla está cuadrada');
-    } else if (total > total_general) {
-      showModal('¡Ojo! Estás metiendo también tus ganancias');
-    }
-  }
-}
-function toggleDenominaciones() {
-  const div = document.getElementById('denominaciones');
-  div.style.display = div.style.display === 'none' ? 'block' : 'none';
-}
-function quitarSurtidor(surtidorNum) {
-  const surtidor = document.getElementById(`surtidor_${surtidorNum}`);
+function deleteSurtidor(id) {
+  const surtidor = document.getElementById(`surtidor-${id}`);
   if (surtidor) {
     surtidor.remove();
-    calcularTotalGeneral();
+    calcularTotalPlanilla();
   }
 }
-function toggleOtrosPagos() {
-  const div = document.getElementById('otros_pagos');
-  div.style.display = div.style.display === 'none' ? 'block' : 'none';
+function handleManguera(surtidorId, mangueraNum) {
+  const detailsDiv = document.getElementById(`manguera-${surtidorId}-${mangueraNum}-details`);
+  const button = event.currentTarget;
+  if (detailsDiv.style.display === 'none' || !detailsDiv.style.display) {
+    detailsDiv.style.display = 'block';
+    button.classList.add('manguera-active');
+  } else {
+    detailsDiv.style.display = 'none';
+    button.classList.remove('manguera-active');
+  }
 }
-function procesarPagoInput(input) {
-  let value = input.value.replace(/[^\d.]/g, '');
-  const numericValue = parseFloat(value.replace(/\./g, '')) || 0;
-  input.dataset.value = numericValue;
-  input.value = formatCOP(numericValue);
-  calcularTotales();
+function calcularGalonaje(surtidorId, mangueraNum) {
+  const inicial = document.getElementById(`inicial-${surtidorId}-${mangueraNum}`).value;
+  const final = document.getElementById(`final-${surtidorId}-${mangueraNum}`).value;
+  if (inicial.length === 10 && final.length === 10) {
+    const vendido = parseFloat(final) - parseFloat(inicial);
+    document.getElementById(`vendido-${surtidorId}-${mangueraNum}`).value = vendido;
+    calcularTotal(surtidorId, mangueraNum);
+    calcularTotalPlanilla();
+  }
 }
-function showModal(message) {
-  document.getElementById('modalMessage').textContent = message;
-  document.getElementById('messageModal').style.display = 'block';
-  document.getElementById('modalBackdrop').style.display = 'block';
+function formatearPrecio(surtidorId, mangueraNum) {
+  const precioInput = document.getElementById(`precio-${surtidorId}-${mangueraNum}`);
+  const precio = unformatNumber(precioInput.value);
+  precioInput.value = formatNumber(precio);
+  calcularTotal(surtidorId, mangueraNum);
+  calcularTotalPlanilla();
 }
-function closeModal() {
-  document.getElementById('messageModal').style.display = 'none';
-  document.getElementById('modalBackdrop').style.display = 'none';
+function calcularTotal(surtidorId, mangueraNum) {
+  const vendido = parseFloat(document.getElementById(`vendido-${surtidorId}-${mangueraNum}`).value) || 0;
+  const precioStr = document.getElementById(`precio-${surtidorId}-${mangueraNum}`).value;
+  const precio = unformatNumber(precioStr);
+  const total = vendido * precio;
+  document.getElementById(`total-${surtidorId}-${mangueraNum}`).value = formatNumber(total);
+  calcularTotalPlanilla();
 }
-agregarSurtidor();
+const denominaciones = {
+  billetes: [100000, 50000, 20000, 10000, 5000, 2000],
+  monedas: [1000, 500, 200, 100, 50]
+};
+const otrosMedios = ['Contratos', 'Créditos', 'Váuchers', 'Transferencias', 'Bonos'];
+function inicializarCuentas() {
+  const efectivoContent = document.getElementById('efectivo-content');
+  const otrosMediosContent = document.getElementById('otros-medios-content');
+  let efectivoHtml = '<h3>Billetes</h3>';
+  denominaciones.billetes.forEach(valor => {
+    efectivoHtml += createDenominacionInput('billete', valor);
+  });
+  efectivoHtml += '<h3>Monedas</h3>';
+  denominaciones.monedas.forEach(valor => {
+    efectivoHtml += createDenominacionInput('moneda', valor);
+  });
+  efectivoHtml += '<div class="total-efectivo">Total Efectivo: <span id="total-efectivo">COP 0</span></div>';
+  efectivoContent.innerHTML = efectivoHtml;
+  let otrosMediosHtml = '';
+  otrosMedios.forEach(medio => {
+    otrosMediosHtml += createOtroMedioInput(medio);
+  });
+  otrosMediosContent.innerHTML = otrosMediosHtml;
+}
+function createDenominacionInput(tipo, valor) {
+  return `
+        <div class="denominacion-container">
+            <div class="input-group">
+                <label>${formatNumber(valor)}</label>
+                <input type="number" 
+                       id="${tipo}-${valor}-cantidad" 
+                       onchange="calcularDenominacion('${tipo}', ${valor})"
+                       min="0">
+            </div>
+            <div class="input-group">
+                <label>Total</label>
+                <input type="text" 
+                       id="${tipo}-${valor}-total" 
+                       disabled>
+            </div>
+        </div>
+    `;
+}
+function createOtroMedioInput(medio) {
+  return `
+        <div class="input-group">
+            <label>${medio}</label>
+            <input type="text" 
+                   id="otro-${medio.toLowerCase()}"
+                   onchange="formatearOtroMedio('${medio.toLowerCase()}')"
+                   placeholder="0">
+        </div>
+    `;
+}
+function toggleSection(id) {
+  const section = document.getElementById(id);
+  section.style.display = section.style.display === 'none' ? 'block' : 'none';
+}
+function calcularDenominacion(tipo, valor) {
+  const cantidad = parseInt(document.getElementById(`${tipo}-${valor}-cantidad`).value) || 0;
+  const total = cantidad * valor;
+  document.getElementById(`${tipo}-${valor}-total`).value = `COP ${formatNumber(total)}`;
+  actualizarTotalEfectivo();
+}
+function formatearOtroMedio(medio) {
+  const input = document.getElementById(`otro-${medio}`);
+  const valor = unformatNumber(input.value);
+  input.value = formatNumber(valor);
+  actualizarTotalOtrosMedios();
+}
+function actualizarTotalEfectivo() {
+  let total = 0;
+  denominaciones.billetes.forEach(valor => {
+    const cantidad = parseInt(document.getElementById(`billete-${valor}-cantidad`).value) || 0;
+    total += cantidad * valor;
+  });
+  denominaciones.monedas.forEach(valor => {
+    const cantidad = parseInt(document.getElementById(`moneda-${valor}-cantidad`).value) || 0;
+    total += cantidad * valor;
+  });
+  document.getElementById('total-efectivo').textContent = `COP ${formatNumber(total)}`;
+  actualizarDineroTotal();
+}
+function calcularTotalPlanilla() {
+  let total = 0;
+  for (let s = 1; s <= surtidorCount; s++) {
+    const surtidor = document.getElementById(`surtidor-${s}`);
+    if (surtidor) {
+      for (let m = 1; m <= 4; m++) {
+        const totalInput = document.getElementById(`total-${s}-${m}`);
+        if (totalInput && totalInput.value) {
+          total += unformatNumber(totalInput.value);
+        }
+      }
+    }
+  }
+  document.getElementById('total-planilla').value = formatNumber(total);
+  actualizarDiferencia();
+}
+function actualizarTotalOtrosMedios() {
+  let total = 0;
+  otrosMedios.forEach(medio => {
+    const valor = unformatNumber(document.getElementById(`otro-${medio.toLowerCase()}`).value);
+    total += valor;
+  });
+  document.getElementById('total-otros-medios').value = formatNumber(total);
+  actualizarDineroTotal();
+}
+function actualizarDineroTotal() {
+  const totalEfectivo = unformatNumber(document.getElementById('total-efectivo').textContent.replace('COP ', ''));
+  const totalOtrosMedios = unformatNumber(document.getElementById('total-otros-medios').value);
+  const dineroTotal = totalEfectivo + totalOtrosMedios;
+  document.getElementById('dinero-total').value = formatNumber(dineroTotal);
+  actualizarDiferencia();
+}
+function actualizarDiferencia() {
+  const dineroTotal = unformatNumber(document.getElementById('dinero-total').value);
+  const totalPlanilla = unformatNumber(document.getElementById('total-planilla').value);
+  const diferencia = dineroTotal - totalPlanilla;
+  document.getElementById('diferencia-total').value = formatNumber(diferencia);
+  
+  // Check conditions for popups
+  if (diferencia === 0) {
+    let hasPrice = false;
+    for (let s = 1; s <= surtidorCount; s++) {
+      const surtidor = document.getElementById(`surtidor-${s}`);
+      if (surtidor) {
+        for (let m = 1; m <= 4; m++) {
+          const precioInput = document.getElementById(`precio-${s}-${m}`);
+          if (precioInput && unformatNumber(precioInput.value) > 0) {
+            hasPrice = true;
+            break;
+          }
+        }
+      }
+      if (hasPrice) break;
+    }
+    if (hasPrice) {
+      showPopup('popup');
+    }
+  } else if (dineroTotal > totalPlanilla) {
+    showPopup('warning-popup');
+  }
+}
+function showPopup(popupId) {
+  const popup = document.getElementById(popupId);
+  const overlay = document.getElementById('popup-overlay');
+  popup.style.display = 'block';
+  overlay.style.display = 'block';
+  setTimeout(() => {
+    closePopup(popupId);
+  }, 3000);
+}
+function closePopup(popupId) {
+  const popup = document.getElementById(popupId);
+  const overlay = document.getElementById('popup-overlay');
+  popup.style.display = 'none';
+  overlay.style.display = 'none';
+}
+// Update event listener to handle both popups
+document.getElementById('popup-overlay').addEventListener('click', () => {
+  closePopup('popup');
+  closePopup('warning-popup');
+});
+addSurtidor();
+inicializarCuentas();
