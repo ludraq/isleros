@@ -1,9 +1,8 @@
-<!DOCTYPE html>
 <html><head><base href="." target="_blank">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
     <title>Sistema de Control de Gasolina</title>
+    <link rel="stylesheet" href="styles.css">
     </head>
     <body>
     <div class="container" id="main-container">
@@ -18,14 +17,14 @@
             <input type="text" id="total-planilla" disabled>
         </div>
         
-        <button class="cuentas-btn" onclick="toggleSection(&apos;cuentas-content&apos;)">Cuentas</button>
+        <button class="cuentas-btn" onclick="toggleSection('cuentas-content')">Cuentas</button>
         <div id="cuentas-content" class="cuentas-content">
-            <button class="subcuentas-btn" onclick="toggleSection(&apos;efectivo-content&apos;)">Cuentas en Efectivo</button>
+            <button class="subcuentas-btn" onclick="toggleSection('efectivo-content')">Cuentas en Efectivo</button>
             <div id="efectivo-content" class="cuentas-content">
                 <!-- Se generarán dinámicamente las denominaciones -->
             </div>
             
-            <button class="subcuentas-btn" onclick="toggleSection(&apos;otros-medios-content&apos;)">Otros Medios de Pago</button>
+            <button class="subcuentas-btn" onclick="toggleSection('otros-medios-content')">Otros Medios de Pago</button>
             <div id="otros-medios-content" class="cuentas-content">
                 <!-- Existing otros medios inputs -->
             </div>
@@ -50,5 +49,6 @@
     <div class="popup" id="warning-popup">
       Cuidado, estas usando tus ganancias
     </div>
+    
     <script src="scripts.js"></script>
     </body></html>
